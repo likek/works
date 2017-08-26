@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图像数据分析</title>
+</head>
+<style>
+    .container {
+        width: 600px;
+        height: 450px;
+        margin: 10px 60px;
+        /*position: absolute;*/
+        border: 1px solid #f00;
+    }
+
+    #image {
+        width: 500px;
+    }
+</style>
+<body>
+<div class="container">
+    <img id="image" src="2.JPG"><br/>
+</div>
+
+处理之后：<span id="result"></span> &nbsp;&nbsp;&nbsp;换算为百分比：<span id="result2"></span>
+</body>
+<script>
+    var container = document.querySelector('#container');
+    var image = document.querySelector("#image");
+    var result = document.querySelector('#result');
+    var result2 = document.querySelector('#result2');
+    image.onload = function () {
+        image.crossOrigin = "Anonymous";
+        var configs = getImageClipConfigs(image);//获取参数
+        result.innerText = JSON.stringify(configs);
+
+        //换算为百分比
+        configs.top = (configs.top / image.clientHeight).toFixed(3);
+        configs.bottom = (configs.bottom / image.clientHeight).toFixed(3);
+        configs.right = (configs.right / image.clientWidth).toFixed(3);
+        configs.left = (configs.left / image.clientWidth).toFixed(3);
+        result2.innerText = JSON.stringify(configs);
+
+        imageClip(image, configs);//裁剪并居中
+
+    };
+
+
+    /*******************************开始:算取四个参数*********************************/
+    function getImageClipConfigs(image) {
+
+        var canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+        var cxt = canvas.getContext('2d');
+        var imageWidth = image.clientWidth, imageHeight = image.clientHeight;
+        canvas.width = imageWidth;
+        canvas.height = imageHeight;
+        cxt.drawImage(image, 0, 0, imageWidth, imageHeight);
+        var imageData = cxt.getImageData(0, 0, imageWidth, imageHeight);
+        var imageDataData = imageData.data;
+        var configs = {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0
+        };
+
+
+        var Iteration_imageDataData = 0, length_imageDataData = imageDataData.length, currentColorAverage, secondColorAverage, thirdColorAverage, forthColorAverage, row_imageDataData, col_imageDataData;
+        var matrix_imageDataData = [];//图片矩阵 (imageWidth * imageHeight的矩阵)
+        var minColorAverage = 46;//RGB三种色值的平均值
+        var maxColorAverage = 220;
+//        var minAearHeight = 40;//要符合条件的话，垂直方向上需要连续的像素点个数
+//        var minAearWidth = 40;//要符合条件的话，水平方向上需要连续的像素点个数
+
+        var Iteration_matrix_imageDataData_row = 0;
+        for (; Iteration_matrix_imageDataData_row < imageHeight; Iteration_matrix_imageDataData_row++) {
+            matrix_imageDataData[Iteration_matrix_imageDataData_row] = [];
+        }
+        var height_matrix_imageDataData = matrix_imageDataData.length;
+        var requirementsFlag = false;
+        //图像数据处理
+        for (; Iteration_imageDataData < length_imageDataData; Iteration_imageDataData += 16) {
+            //取连续的4个像素点
+            currentColorAverage = (imageDataData[Iteration_imageDataData] + imageDataData[Iteration_imageDataData + 1] + imageDataData[Iteration_imageDataData + 2]) / 3;//本次
+            secondColorAverage = (imageDataData[Iteration_imageDataData + 4] + imageDataData[Iteration_imageDataData + 5] + imageDataData[Iteration_imageDataData + 6]) / 3;//下一个
+            thirdColorAverage = (imageDataData[Iteration_imageDataData + 8] + imageDataData[Iteration_imageDataData + 9] + imageDataData[Iteration_imageDataData + 10]) / 3;//下下一个
+            forthColorAverage = (imageDataData[Iteration_imageDataData + 12] + imageDataData[Iteration_imageDataData + 13] + imageDataData[Iteration_imageDataData + 14]) / 3;//下下下一个(边界问题)
+            row_imageDataData = Math.floor((Iteration_imageDataData / 4) / imageWidth);//行
+            col_imageDataData = (Iteration_imageDataData / 4) % imageWidth;//列
+            requirementsFlag = (currentColorAverage > minColorAverage && secondColorAverage > minColorAverage && thirdColorAverage > minColorAverage && forthColorAverage > minColorAverage
+            && currentColorAverage < maxColorAverage && secondColorAverage < maxColorAverage && thirdColorAverage < maxColorAverage && forthColorAverage < maxColorAverage);
+            if (requirementsFlag) {
+                matrix_imageDataData[row_imageDataData][col_imageDataData] = 1;
+                matrix_imageDataData[row_imageDataData][col_imageDataData + 1] = 1;
+                matrix_imageDataData[row_imageDataData][col_imageDataData + 2] = 1;
+                matrix_imageDataData[row_imageDataData][col_imageDataData + 3] = 1;
+            } else {
+                matrix_imageDataData[row_imageDataData][col_imageDataData] = 0;
+                matrix_imageDataData[row_imageDataData][col_imageDataData + 1] = 0;
+                matrix_imageDataData[row_imageDataData][col_imageDataData + 2] = 0;
+                matrix_imageDataData[row_imageDataData][col_imageDataData + 3] = 0;
+            }
+        }
+
+
+        //过滤杂质
+        var width_matrix_imageDataData = matrix_imageDataData[0].length;
+        Iteration_matrix_imageDataData_row = 0;
+        var Iteration_matrix_imageDataData_col;
+        for (; Iteration_matrix_imageDataData_row < height_matrix_imageDataData; Iteration_matrix_imageDataData_row++) {
+            Iteration_matrix_imageDataData_col = 0;
+            for (; Iteration_matrix_imageDataData_col < width_matrix_imageDataData; Iteration_matrix_imageDataData_col++) {
+                if (matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] == 0) {
+                    continue;
+                }
+                if (IntensiveLevel(matrix_imageDataData, Iteration_matrix_imageDataData_row, Iteration_matrix_imageDataData_col, 3) < 0.3) { // 1 - i/(1+2i)
+                    matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] = 0;
+//                    var index = ((Iteration_matrix_imageDataData_row - 1) * imageWidth + Iteration_matrix_imageDataData_col) * 4 - 1;
+                }
+            }
+        }
+        //取值
+        Iteration_matrix_imageDataData_row = 0;
+        for (; Iteration_matrix_imageDataData_row < height_matrix_imageDataData; Iteration_matrix_imageDataData_row++) {
+            Iteration_matrix_imageDataData_col = 0;
+            for (; Iteration_matrix_imageDataData_col < width_matrix_imageDataData; Iteration_matrix_imageDataData_col++) {
+                if (matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] == 1) {
+                    if (configs.top == 0) {
+                        configs.top = Iteration_matrix_imageDataData_row; //得到top
+                    }
+                    configs.bottom = Iteration_matrix_imageDataData_row;
+                }
+            }
+        }
+        var middleOfAvaliImage = Math.floor((configs.top + configs.bottom) / 2);
+        configs.left = matrix_imageDataData[middleOfAvaliImage].indexOf(1);//top + (bottom - top) / 2
+        configs.right = matrix_imageDataData[middleOfAvaliImage].lastIndexOf(1);//top + (bottom - top) / 2
+
+
+        //某个位置处 1 的密集度//检测不同行不同列的位置区域大小为sum的1的密度
+        function IntensiveLevel(arr, x, y, m) {
+            var width = m || 1;
+            var sum = (m * 2 + 1) * (m * 2 + 1);
+            var il = x + width,
+                jl = y + width,
+                count = 0;
+            var i = x - width;
+            for (; i <= il; i++) {
+                if (i < 0) {
+                    continue;
+                }
+                var j = y - width;
+                for (; j <= jl; j++) {
+                    try {
+                        if (j >= 0 && i != x && j != y && arr[i][j] == 1) {
+                            count++;
+                        }
+                    } catch (e) {
+                        console.log(i + '-----' + j);
+                    }
+                }
+            }
+            return count / sum;
+        }
+
+        canvas.style.display = "none";
+        document.body.removeChild(canvas);
+        return configs;
+
+
+    }
+    /*******************************结束:算取四个参数*********************************/
+
+    /*******************************开始:根据参数裁剪并绝对居中*********************************/
+    function imageClip(image, config) {
+        clipConfig = {
+            top: image.offsetHeight * config.top,
+            right: image.offsetWidth * config.right,
+            bottom: image.offsetHeight * config.bottom,
+            left: image.offsetWidth * config.left,
+            widthScale: config.widthScale
+        };
+        var AvailableArea = {
+            width: clipConfig.right - clipConfig.left,
+            height: clipConfig.bottom - clipConfig.top
+        };
+        var scaleBaseWidth = clipConfig.widthScale || 1 + (image.offsetWidth - (clipConfig.right - clipConfig.left)) / (clipConfig.right - clipConfig.left);
+        var scaleBaseHeight = clipConfig.widthScale || 1 + (image.offsetHeight - (clipConfig.bottom - clipConfig.top)) / (clipConfig.bottom - clipConfig.top);
+        var widthScale = Math.min(scaleBaseWidth, scaleBaseHeight);
+
+
+        image.style.position = "absolute";
+        var marginLeft = (image.parentNode.offsetWidth - image.offsetWidth) / 2 - clipConfig.left + (clipConfig.left + (image.offsetWidth - clipConfig.right)) / 2;
+        var marginTop = (image.parentNode.offsetHeight - image.offsetHeight) / 2 - clipConfig.top + (clipConfig.top + (image.offsetHeight - clipConfig.bottom)) / 2;
+
+        image.style.marginLeft = marginLeft + "px";
+        image.style.marginTop = marginTop + "px";
+
+        image.style.clip = "rect(" + (clipConfig.top || 0) + "px " + (clipConfig.right || 0) + "px " + (clipConfig.bottom || 0) + "px " + (clipConfig.left || 0) + "px)";
+        image.style.transformOrigin = (clipConfig.left + AvailableArea.width / 2) + "px  " + (clipConfig.top + AvailableArea.height / 2) + "px";
+        image.style.transform = "scale(" + widthScale + ")";
+    }
+    /*******************************结束:根据参数裁剪并绝对居中*********************************/
+</script>
+</html>
