@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,37 +18,43 @@
     }
 </style>
 <body>
-<div class="container">
-    <img id="image" src="2.JPG"><br/>
-</div>
 
-处理之后：<span id="result"></span> &nbsp;&nbsp;&nbsp;换算为百分比：<span id="result2"></span>
+<input id="imageFile" type="file">
+<div class="container">
+    <img id="image" src="1.JPG"><br/>
+    四个参数：<span id="result"></span>
+</div>
 </body>
 <script>
     var container = document.querySelector('#container');
-    var image = document.querySelector("#image");
     var result = document.querySelector('#result');
-    var result2 = document.querySelector('#result2');
+    var imageFiles = document.querySelector('#imageFile');
+    var image = document.querySelector("#image");
+
+    imageFiles.onchange = function (e) {
+        var image = document.querySelector("#image");
+        var fileReader = new FileReader();
+        var imageFile = imageFiles.files[0];
+        fileReader.readAsDataURL(imageFile);
+        fileReader.onload = function (e) {
+            image.src = e.target.result;
+        };
+
+        image.onload = function () {
+            var configs = getImageClipConfigs(image, true);//获取参数
+            result.innerText = JSON.stringify(configs);
+            imageClip(image, configs);//裁剪并居中
+        };
+    };
     image.onload = function () {
-        image.crossOrigin = "Anonymous";
-        var configs = getImageClipConfigs(image);//获取参数
+        var configs = getImageClipConfigs(image, true);//获取参数
         result.innerText = JSON.stringify(configs);
-
-        //换算为百分比
-        configs.top = (configs.top / image.clientHeight).toFixed(3);
-        configs.bottom = (configs.bottom / image.clientHeight).toFixed(3);
-        configs.right = (configs.right / image.clientWidth).toFixed(3);
-        configs.left = (configs.left / image.clientWidth).toFixed(3);
-        result2.innerText = JSON.stringify(configs);
-
         imageClip(image, configs);//裁剪并居中
-
     };
 
 
     /*******************************开始:算取四个参数*********************************/
-    function getImageClipConfigs(image) {
-
+    function getImageClipConfigs(image, debug,area) {
         var canvas = document.createElement('canvas');
         document.body.appendChild(canvas);
         var cxt = canvas.getContext('2d');
@@ -68,8 +74,8 @@
 
         var Iteration_imageDataData = 0, length_imageDataData = imageDataData.length, currentColorAverage, secondColorAverage, thirdColorAverage, forthColorAverage, row_imageDataData, col_imageDataData;
         var matrix_imageDataData = [];//图片矩阵 (imageWidth * imageHeight的矩阵)
-        var minColorAverage = 46;//RGB三种色值的平均值
-        var maxColorAverage = 220;
+        var minColorAverage = (area && area.min)||32;//RGB三种色值的平均值
+        var maxColorAverage = (area && area.max)||256;
 //        var minAearHeight = 40;//要符合条件的话，垂直方向上需要连续的像素点个数
 //        var minAearWidth = 40;//要符合条件的话，水平方向上需要连续的像素点个数
 
@@ -91,6 +97,21 @@
             requirementsFlag = (currentColorAverage > minColorAverage && secondColorAverage > minColorAverage && thirdColorAverage > minColorAverage && forthColorAverage > minColorAverage
             && currentColorAverage < maxColorAverage && secondColorAverage < maxColorAverage && thirdColorAverage < maxColorAverage && forthColorAverage < maxColorAverage);
             if (requirementsFlag) {
+                if (debug) {
+                    imageDataData[Iteration_imageDataData] = 0;
+                    imageDataData[Iteration_imageDataData + 1] = 255;
+                    imageDataData[Iteration_imageDataData + 2] = 0;
+                    imageDataData[Iteration_imageDataData + 4] = 0;
+                    imageDataData[Iteration_imageDataData + 5] = 255;
+                    imageDataData[Iteration_imageDataData + 6] = 0;
+                    imageDataData[Iteration_imageDataData + 8] = 0;
+                    imageDataData[Iteration_imageDataData + 9] = 255;
+                    imageDataData[Iteration_imageDataData + 10] = 0;
+                    imageDataData[Iteration_imageDataData + 12] = 0;
+                    imageDataData[Iteration_imageDataData + 13] = 255;
+                    imageDataData[Iteration_imageDataData + 14] = 0;
+                }
+
                 matrix_imageDataData[row_imageDataData][col_imageDataData] = 1;
                 matrix_imageDataData[row_imageDataData][col_imageDataData + 1] = 1;
                 matrix_imageDataData[row_imageDataData][col_imageDataData + 2] = 1;
@@ -104,22 +125,63 @@
         }
 
 
-        //过滤杂质
+        //过滤杂质(去掉稀疏的部分)(方案1)
+//        var width_matrix_imageDataData = matrix_imageDataData[0].length;
+//        Iteration_matrix_imageDataData_row = 0;
+//        var Iteration_matrix_imageDataData_col;
+//        for (; Iteration_matrix_imageDataData_row < height_matrix_imageDataData; Iteration_matrix_imageDataData_row++) {
+//            Iteration_matrix_imageDataData_col = 0;
+//            for (; Iteration_matrix_imageDataData_col < width_matrix_imageDataData; Iteration_matrix_imageDataData_col++) {
+//                if (matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] == 0) {
+//                    continue;
+//                }
+//                if (!IntensiveLevel(matrix_imageDataData, Iteration_matrix_imageDataData_row, Iteration_matrix_imageDataData_col, 8)) { // 1 - i/(1+2i)
+//                    matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] = 0;
+//                    if (debug) {
+//                        var index = ((Iteration_matrix_imageDataData_row - 1) * imageWidth + Iteration_matrix_imageDataData_col) * 4 - 1;
+//                        imageDataData[index - 1] = 0;
+//                        imageDataData[index - 2] = 0;
+//                        imageDataData[index - 3] = 0;
+//                    }
+//                }
+//            }
+//        }
+        //过滤杂质(去掉稀疏的部分)(方案2)
         var width_matrix_imageDataData = matrix_imageDataData[0].length;
         Iteration_matrix_imageDataData_row = 0;
+        var step = 6;//每次跳4格
         var Iteration_matrix_imageDataData_col;
-        for (; Iteration_matrix_imageDataData_row < height_matrix_imageDataData; Iteration_matrix_imageDataData_row++) {
+        for (; Iteration_matrix_imageDataData_row < height_matrix_imageDataData - step; Iteration_matrix_imageDataData_row += step) {
             Iteration_matrix_imageDataData_col = 0;
-            for (; Iteration_matrix_imageDataData_col < width_matrix_imageDataData; Iteration_matrix_imageDataData_col++) {
-                if (matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] == 0) {
-                    continue;
-                }
-                if (IntensiveLevel(matrix_imageDataData, Iteration_matrix_imageDataData_row, Iteration_matrix_imageDataData_col, 3) < 0.3) { // 1 - i/(1+2i)
-                    matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] = 0;
-//                    var index = ((Iteration_matrix_imageDataData_row - 1) * imageWidth + Iteration_matrix_imageDataData_col) * 4 - 1;
+            for (; Iteration_matrix_imageDataData_col < width_matrix_imageDataData - step; Iteration_matrix_imageDataData_col += step) {
+
+//                if (matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] == 0) {
+//                    continue;
+//                }
+                if (!IntensiveLevel(matrix_imageDataData, Iteration_matrix_imageDataData_row, Iteration_matrix_imageDataData_col, step)) { // 1 - i/(1+2i)
+//                    matrix_imageDataData[Iteration_matrix_imageDataData_row][Iteration_matrix_imageDataData_col] = 0;
+//                    if (debug) {
+//                        var index = ((Iteration_matrix_imageDataData_row - 1) * imageWidth + Iteration_matrix_imageDataData_col) * 4 - 1;
+//                        imageDataData[index - 1] = 0;
+//                        imageDataData[index - 2] = 0;
+//                        imageDataData[index - 3] = 0;
+//                    }
+                    for(var row_startCheckPo = Iteration_matrix_imageDataData_row;row_startCheckPo <= Iteration_matrix_imageDataData_row + step;row_startCheckPo++){
+                        for(var col_startCheckPo = Iteration_matrix_imageDataData_col;col_startCheckPo <= Iteration_matrix_imageDataData_col + step;col_startCheckPo++){
+                            matrix_imageDataData[row_startCheckPo][col_startCheckPo] = 0;
+                            if (debug) {
+                                var index = ((row_startCheckPo - 1) * imageWidth + col_startCheckPo) * 4 - 1;
+                                imageDataData[index - 1] = 0;
+                                imageDataData[index - 2] = 0;
+                                imageDataData[index - 3] = 0;
+                            }
+                        }
+                    }
                 }
             }
         }
+
+
         //取值
         Iteration_matrix_imageDataData_row = 0;
         for (; Iteration_matrix_imageDataData_row < height_matrix_imageDataData; Iteration_matrix_imageDataData_row++) {
@@ -137,38 +199,105 @@
         configs.left = matrix_imageDataData[middleOfAvaliImage].indexOf(1);//top + (bottom - top) / 2
         configs.right = matrix_imageDataData[middleOfAvaliImage].lastIndexOf(1);//top + (bottom - top) / 2
 
-
         //某个位置处 1 的密集度//检测不同行不同列的位置区域大小为sum的1的密度
         function IntensiveLevel(arr, x, y, m) {
-            var width = m || 1;
-            var sum = (m * 2 + 1) * (m * 2 + 1);
-            var il = x + width,
-                jl = y + width,
-                count = 0;
-            var i = x - width;
-            for (; i <= il; i++) {
-                if (i < 0) {
-                    continue;
-                }
-                var j = y - width;
-                for (; j <= jl; j++) {
-                    try {
-                        if (j >= 0 && i != x && j != y && arr[i][j] == 1) {
-                            count++;
-                        }
-                    } catch (e) {
-                        console.log(i + '-----' + j);
+            //方案1
+//            var width = m || 1;
+//            var sum = (m * 2 + 1) * (m * 2 + 1);
+//            var il = x + width,
+//                jl = y + width,
+//                count = 0;
+//            var i = x - width;
+//            for (; i <= il; i++) {
+//                if (i < 0) {
+//                    continue;
+//                }
+//                var j = y - width;
+//                for (; j <= jl; j++) {
+//                    try {
+//                        if (j >= 0 && i != x && j != y && arr[i][j] == 1) {
+//                            count++;
+//                        }
+//                    } catch (e) {
+//                        console.log(i + '-----' + j);
+//                    }
+//                }
+//            }
+//            return (count / sum) > 0.25;
+            //方案2
+//            var width = m || 1;
+//            var count = 0;
+//            var right  = y + width,left = y -width, top = x - width,bottom = x + width;
+//
+//            try {
+//                for(var i = left;i <= right;i++){
+//                    if(arr[top][i] == 0){
+//                        break;
+//                    }
+//                    if(i == right){
+//                        count ++;//top一行
+//                    }
+//                }
+//                for(i = left;i <= right;i++){
+//                    if(arr[bottom][i] == 0){
+//                        break;
+//                    }
+//                    if(i == right){
+//                        count ++;//bottom一行
+//                    }
+//                }
+//                for(i = top;i <= bottom;i++){
+//                    if(arr[i][left] == 0){
+//                        break;
+//                    }
+//                    if(i == bottom){
+//                        count ++;//左一行
+//                    }
+//                }
+//                for(i = top;i <= bottom;i++){
+//                    if(arr[i][right] == 0){
+//                        break;
+//                    }
+//                    if(i == bottom){
+//                        count ++;//右一行
+//                    }
+//                }
+//            }catch (e){
+//                console.log(i);
+//                console.log(left + ".." + right + ".." + top + ".." +bottom);
+//                console.log(e);
+//            }
+//            return (count > 0);
+            //方案3
+            var rl = x + m;
+            var cl = y + m;
+            var count = 0;
+            for(var r = x;r <= rl;r++){
+                for(var c =y;c<cl;c++){
+                    if(arr[r][c] == 1){
+                        count++;
                     }
                 }
             }
-            return count / sum;
+            return (count / (m*m) > 0.6);
         }
 
-        canvas.style.display = "none";
-        document.body.removeChild(canvas);
+        if (!debug) {
+            canvas.style.display = "none";
+            document.body.removeChild(canvas);
+        }
+
+        configs.top = (configs.top / imageHeight).toFixed(3);
+        configs.bottom = (configs.bottom / imageHeight).toFixed(3);
+        configs.right = (configs.right / imageWidth).toFixed(3);
+        configs.left = (configs.left / imageWidth).toFixed(3);
+
+        if (debug) {
+            cxt.putImageData(imageData, 0, 0);
+        }
+        window.matrix_imageDataData = matrix_imageDataData;
+        window.imageDataData = imageDataData;
         return configs;
-
-
     }
     /*******************************结束:算取四个参数*********************************/
 
