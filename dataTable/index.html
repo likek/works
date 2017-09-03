@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <script src="DataTable.js"></script>
+</head>
+<body>
+<div id="container"></div>
+</body>
+
+<script>
+    var currentUser = "lisi";
+    var data = [
+        {
+            equipment:"CT01",
+            doctor:"zhangsan"
+        },
+        {
+            equipment:"CT02",
+            doctor:"lisi"
+        },
+        {
+            equipment:"CT03",
+            doctor:""
+        },
+        {
+            equipment:"MR01",
+            doctor:"lisi"
+        }
+        ,
+        {
+            equipment:"MR02",
+            doctor:"wangwu"
+        }
+    ];
+    var columns =[
+        {
+            name:"equipment",
+            default:"未知设备",
+            otherCss:{}
+        },
+        {
+            name:"doctor",
+            default:"未知医生",
+            otherCss:{}
+        },
+        {
+            default:'<button>11</button>',
+            otherCss:{
+                textAlign:'center'
+            }
+        }
+    ];
+
+
+
+    var tableContainer = document.querySelector('#container');
+
+    var dataTable = new DataTable(data,columns);
+    dataTable.thead = ["设备","医生","操作"];
+
+    dataTable.oncelldraw = function (cell,data) {
+
+    };
+    dataTable.onrowdraw = function (row,data) {
+
+    };
+
+    dataTable.draw(tableContainer);
+</script>
+</html>
