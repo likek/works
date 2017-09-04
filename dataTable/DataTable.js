@@ -2,7 +2,7 @@
  * Created by likeke on 2017/9/3.
  */
 function DataTable(data, columns) {
-    this.data = data;
+    this.data = [].concat(data);
     this.columns = columns;
     this.thead = [];
     this.tfoot = [];
@@ -83,21 +83,35 @@ DataTable.prototype.draw = function (container) {
     _t.ontabledraw(table, _t.data);
     container.appendChild(table);
 };
-DataTable.prototype.refreshData = function () {
+DataTable.prototype.refreshData = function (data) {
     var _t = this;
     var css = _t.tools.css;
     var tbody = _t.table.querySelector('tbody');
     var rows = tbody.querySelectorAll('tr'), row = null, cells = null, cell = null, cellData = null;
-    for (var i = 0, l = _t.data.length; i < l; i++) {
-        row = rows[i];
+    for (var i = 0, l = data.length; i < l; i++) {
+        row = rows[i]||document.createElement('tr');
         cells = row.querySelectorAll('td');
         for (var j = 0, le = _t.columns.length; j < le; j++) {
-            cell = cells[j];
-            cellData = _t.data[i][_t.columns[j].name] || _t.columns[j].default;
+            cell = cells[j]||document.createElement('td');
+            cellData = data[i][_t.columns[j].name] || _t.columns[j].default;
             cell.innerHTML = cellData;
+            if(l>_t.data.length){
+                row.appendChild(cell);
+            }
             _t.oncelldraw(cell, cellData);
             _t.columns[j].otherCss && css(cell, _t.columns[j].otherCss);
         }
-        _t.onrowdraw(row, _t.data[i]);
+        if(l>_t.data.length){
+            tbody.appendChild(row);
+        }
+        _t.onrowdraw(row, data[i]);
     }
+    if(data.length<_t.data.length){
+        var compLength = _t.data.length - data.length;
+        for(i = 1;i<=compLength;i++){
+            row = tbody.getElementsByTagName('tr')[_t.data.length-i];
+            row && tbody.removeChild(row);
+        }
+    }
+    _t.data = data;
 };

@@ -40,7 +40,7 @@
             doctor: "wangwu"
         },
         {
-            equipment: "MR02",
+            equipment: "MR03",
             doctor: ""
         }
     ];
@@ -99,11 +99,10 @@
         btn.style.cursor = "pointer";
     };
     dataTable.draw(tableContainer);
+    //定时刷新数据
     !function drawData() {
-        data[0].equipment = "ct01";
-        data[1].equipment = "ct02";
-        dataTable.data = data;
-        dataTable.refreshData();
+        //获取最新数据
+        dataTable.refreshData(data);
         setTimeout(function () {
             drawData();
         }, 3000);
