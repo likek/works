@@ -1,0 +1,28 @@
+.dataTable tr{
+    height: 60px;
+}
+.dataTable {border-collapse:collapse;}
+/*.dataTable th,.dataTable td {border: 1px solid #000;}
+.dataTable tbody{
+    border-bottom: 1px solid #000;
+}*/
+.dataTable tbody,.dataTable thead{
+    display: block;
+    height: 100%;
+}
+.dataTable tbody{
+    height: 300px;
+    overflow-y: scroll;
+}
+.dataTable tbody tr:nth-child(1) td{
+    border-top: none;
+}
+.dataTable tbody tr:last-child td{
+    border-bottom: none;
+}
+.dataTable tbody td{
+    width: 200px;
+}
+.dataTable thead th{
+    width: 193px;
+}

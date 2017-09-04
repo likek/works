@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <title>index</title>
     <script src="DataTable.js"></script>
+    <link rel="stylesheet" href="tableTheme1.css">
 </head>
+<style>
+    #container{
+        width: 600px;
+    }
+</style>
 <body>
 <div id="container"></div>
 </body>
@@ -13,60 +19,94 @@
     var currentUser = "lisi";
     var data = [
         {
-            equipment:"CT01",
-            doctor:"zhangsan"
+            equipment: "CT01",
+            doctor: "zhangsan"
         },
         {
-            equipment:"CT02",
-            doctor:"lisi"
+            equipment: "CT02",
+            doctor: "lisi"
         },
         {
-            equipment:"CT03",
-            doctor:""
+            equipment: "CT03",
+            doctor: ""
         },
         {
-            equipment:"MR01",
-            doctor:"lisi"
+            equipment: "MR01",
+            doctor: "lisi"
         }
         ,
         {
-            equipment:"MR02",
-            doctor:"wangwu"
+            equipment: "MR02",
+            doctor: "wangwu"
+        },
+        {
+            equipment: "MR02",
+            doctor: ""
         }
     ];
-    var columns =[
+    var columns = [
         {
-            name:"equipment",
-            default:"未知设备",
-            otherCss:{}
+            name: "equipment",
+            default: "未知设备",
+            otherCss: {}
         },
         {
-            name:"doctor",
-            default:"未知医生",
-            otherCss:{}
+            name: "doctor",
+            default: "未被占用",
+            otherCss: {}
         },
         {
-            default:'<button>11</button>',
-            otherCss:{
-                textAlign:'center'
+            default: '-',
+            otherCss: {
+                textAlign: 'center'
             }
         }
     ];
 
 
-
     var tableContainer = document.querySelector('#container');
-
-    var dataTable = new DataTable(data,columns);
-    dataTable.thead = ["设备","医生","操作"];
-
-    dataTable.oncelldraw = function (cell,data) {
-
+    var statusColor = {
+        free:"#58C4A0",
+        occupiedByCurrUser:"#ccc"
     };
-    dataTable.onrowdraw = function (row,data) {
+    var dataTable = new DataTable(data, columns);
+    dataTable.thead = ["设备编号", "占用医生", "操作"];
 
+    dataTable.onrowdraw = function (row, data) {
+        var btn = row.lastElementChild;
+        if (data.doctor == currentUser) {
+            btn.innerHTML = "解除占用";
+            row.style.background = statusColor.occupiedByCurrUser;
+            btn.onclick = function (e) {
+                //发数据
+
+                //获取数据并更新
+//                dataTable.data = newData;
+//                dataTable.refreshData();
+            }
+        }
+        if (data.doctor == "") {
+            btn.innerHTML = "切换到该设备";
+            row.style.background = statusColor.free;
+            btn.onclick = function (e) {
+                //发数据
+
+                //获取数据并更新
+//                dataTable.data = newData;
+//                dataTable.refreshData();
+            }
+        }
+        btn.style.cursor = "pointer";
     };
-
     dataTable.draw(tableContainer);
+    !function drawData() {
+        data[0].equipment = "ct01";
+        data[1].equipment = "ct02";
+        dataTable.data = data;
+        dataTable.refreshData();
+        setTimeout(function () {
+            drawData();
+        }, 3000);
+    }();
 </script>
 </html>
