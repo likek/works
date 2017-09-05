@@ -71,11 +71,15 @@
     };
     var dataTable = new DataTable(data, columns);
     dataTable.thead = ["设备编号", "占用医生", "操作"];
+    dataTable.filterBy = {
+        equipment:['CT01','CT02'],
+        doctor:['wangwu']
+    };
 
     dataTable.onrowdraw = function (row, data) {
         var btn = row.lastElementChild;
         if (data.doctor == currentUser) {
-            btn.innerHTML = "解除占用";
+            btn.innerHTML = '<input type="button" value="解除占用">';
             row.style.background = statusColor.occupiedByCurrUser;
             btn.onclick = function (e) {
                 //发数据
@@ -86,7 +90,7 @@
             }
         }
         if (data.doctor == "") {
-            btn.innerHTML = "切换到该设备";
+            btn.innerHTML = '<input type="button" value="切换到该设备">';
             row.style.background = statusColor.free;
             btn.onclick = function (e) {
                 //发数据
@@ -99,6 +103,10 @@
         btn.style.cursor = "pointer";
     };
     dataTable.draw(tableContainer);
+    data.push({
+        equipment: "MR02",
+        doctor: "wangwu"
+    });
     //定时刷新数据
     !function drawData() {
         //获取最新数据

@@ -12,7 +12,7 @@
 }
 .dataTable tbody{
     height: 300px;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 .dataTable tbody tr:nth-child(1) td{
     border-top: none;
