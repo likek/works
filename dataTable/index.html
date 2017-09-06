@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="tableTheme1.css">
 </head>
 <style>
-    #container{
+    #container {
         width: 600px;
     }
 </style>
@@ -19,22 +19,17 @@
     var currentUser = "lisi";
     var data = [
         {
-            equipment: "CT01",
-            doctor: "zhangsan"
-        },
-        {
-            equipment: "CT02",
-            doctor: "lisi"
-        },
-        {
             equipment: "CT03",
             doctor: ""
         },
         {
             equipment: "MR01",
             doctor: "lisi"
-        }
-        ,
+        },
+        {
+            equipment: "CT02",
+            doctor: "lisi"
+        },
         {
             equipment: "MR02",
             doctor: "wangwu"
@@ -42,6 +37,14 @@
         {
             equipment: "MR03",
             doctor: ""
+        },
+        {
+            equipment: "CT01",
+            doctor: "zhangsan"
+        },
+        {
+            equipment: "DR01",
+            doctor: "yaya"
         }
     ];
     var columns = [
@@ -62,19 +65,18 @@
             }
         }
     ];
-
-
     var tableContainer = document.querySelector('#container');
     var statusColor = {
-        free:"#58C4A0",
-        occupiedByCurrUser:"#ccc"
+        free: "#58C4A0",
+        occupiedByCurrUser: "#ccc"
     };
     var dataTable = new DataTable(data, columns);
     dataTable.thead = ["设备编号", "占用医生", "操作"];
     dataTable.filterBy = {
-        equipment:['CT01','CT02'],
-        doctor:['wangwu']
+        equipment: ['CT01'],
+        doctor:["wangwu"]
     };
+    dataTable.sortBy = "equipment";
 
     dataTable.onrowdraw = function (row, data) {
         var btn = row.lastElementChild;

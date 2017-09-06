@@ -1,31 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>scroll</title>
-    <style>
-        #container{
-            width: 200px;
-            height: 300px;
-            border: 1px solid #f00;
-        }
-    </style>
-</head>
-<body>
-  <div id="container">
-
-  </div>
-</body>
-
-<script>
-    var container = document.querySelector('#container');
-    var cc= document.createElement('span');
-    cc.innerText = "22222222";
-    marquee(container,cc,"right");
-
-    function marquee(box, content,direction,speed) {
-        var content = content;
-        var speed = speed||50;
+﻿    function marquee(box, content,direction,speed) {
+        var content = content;//滚动内容
+        var speed = speed||50;//速度默认 2像素/50毫秒
         if(/HTML/.test(Object.prototype.toString.call(content))){
             content= dom2str(content);
         }
@@ -47,12 +22,12 @@
         box.style.textAlign = "center";
         container.style.position = "absolute";
         box.appendChild(container);
-        if(direction == "right" ||direction == "left"){
+        if(direction == "right" || direction == "left"){
             container.style.width = "200%";
-            div.style.width = "50%";
-            div2.style.width = "50%";
-            div.style.float = "left";
-            div2.style.float = "left";
+            div.style.width = "48%";
+            div2.style.width = "48%";
+            div.style.float = direction;
+            div2.style.float = direction;
         }
 
         box.style.overflow = "hidden";
@@ -61,45 +36,44 @@
         switch (direction){
             case "right":
                 step = -maxWidth;
-                !function temp() {
+                !function temp0() {
                     if(step >= 0){
                         step = -maxWidth;
                     }
                     container.style.left = step + "px";
                     step += 2;
-                    setTimeout(temp,speed);//速度默认 2像素/100毫秒
+                    setTimeout(temp0,speed);
                 }();
                 break;
             case "down":
                 step = -maxHeight;
-                !function temp() {
+                !function temp1() {
                     if(step >= 0){
                         step = -maxHeight;
                     }
                     container.style.top = step + "px";
                     step += 2;
-                    setTimeout(temp,speed);//速度默认 2像素/100毫秒
+                    setTimeout(temp1,speed);//速度默认 2像素/50毫秒
                 }();
                 break;
             case "left":
-                !function temp() {
+                !function temp2() {
                     if(step <= -maxWidth){
                         step = 0;
                     }
                     container.style.left = step + "px";
                     step -= 2;
-                    setTimeout(temp,speed);//速度默认 2像素/100毫秒
+                    setTimeout(temp2,speed);//速度默认 2像素/50毫秒
                 }();
                 break;
             default:
-                //向上
-                !function temp() {
+                !function temp3() {
                     if(step <= -maxHeight){
                         step = 0;
                     }
                     container.style.top = step + "px";
                     step -= 2;
-                    setTimeout(temp,speed);//速度默认 2像素/100毫秒
+                    setTimeout(temp3,speed);//速度默认 2像素/50毫秒
                 }();
                 break;
         }
@@ -112,5 +86,3 @@
             return div.innerHTML;
         }
     }
-</script>
-</html>

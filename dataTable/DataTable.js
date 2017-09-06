@@ -1,11 +1,26 @@
 /**
  * Created by likeke on 2017/9/3.
  */
+
+/*
+ * tools
+ * */
+Array.prototype.where = function (match) {
+    var temp = [];
+    for (var i = 0; i < this.length; i++) {
+        if (match(this[i])) temp.push(this[i]);
+    }
+    return temp;
+};
+
+/*
+ *DataTable类开始
+ * */
 function DataTable(data, columns) {
     this.data = [].concat(data);
     this.columns = columns;
     this.filterBy = null;
-    this.dataSort = null;
+    this.sortBy = null;
     this.thead = [];
     this.tfoot = [];
     this.table = document.createElement('table');
@@ -16,42 +31,33 @@ function DataTable(data, columns) {
     this.oncelldraw = function (cell, cellData) {
     }
 }
-DataTable.prototype.tools = {
-    css: function (ele, css) {
+DataTable.prototype.tools = new function () {
+    this.css = function (ele, css) {
         for (var item in css) {
             if (css.hasOwnProperty(item)) {
                 ele.style[item] = css[item];
             }
         }
-    },
-    JSONSort: function (json, a, b) {
-        var newJson = (function temp(arr) {
-            var i = arr.lastIndexOf(null);
-            if (i == -1) {
-                return arr;
-            }
-            arr.splice(i, 1);
-            return temp(arr);
-        })(json);
-
-        function comp(a, b) {
-            return new Function("a", "b", "return  " + a + ".toString().charCodeAt() -  " + b + ".toString().charCodeAt();");
+    };
+    this.JSONSort = function (json, sortBy) {
+        var newJson = json.where(function (i) {
+            return i != null;
+        });
+        function comp(sortBy) {
+            return new Function("a", "b", "return a." + sortBy + ".toString().localeCompare(b." + sortBy + ".toString());");
         }
-
-        return newJson.sort(comp(a, b));
-    },
-    filter: function (filterList,data) {
+        return newJson.sort(comp(sortBy));
+    };
+    this.filter = function (filterList, data) {
         var _t = this;
         var newData = [].concat(data);
         for (var item in filterList) {
             if (filterList.hasOwnProperty(item)) {
-                for (var i = 0, l = newData.length; i < l; i++) {
-                    if (filterList[item].indexOf(newData[i][item]) != -1) {
-                        newData.splice(i,1);
-                        i--;
-                        l--;
-                    }
-                }
+                !function (item) {
+                    newData = newData.where(function (i) {
+                        return filterList[item].indexOf(i[item]) == -1
+                    });
+                }(item);
             }
         }
         return newData;
@@ -122,16 +128,16 @@ DataTable.prototype.draw = function (container) {
     container.appendChild(table);
 };
 
-DataTable.prototype.dataFormat =function (data) {
+DataTable.prototype.dataFormat = function (data) {
     var _t = this;
     var filter = _t.tools.filter;
     var JSONSort = _t.tools.JSONSort;
     var newData = [].concat(data);
-    if(_t.filterBy){
-        newData = filter(_t.filterBy,newData);
+    if (_t.filterBy) {
+        newData = filter(_t.filterBy, newData);
     }
-    if (_t.dataSort) {
-        newData = JSONSort(newData, "a." + _t.dataSort, "b." + _t.dataSort);
+    if (_t.sortBy) {
+        newData = JSONSort(newData, _t.sortBy);
     }
     return newData;
 };
@@ -142,22 +148,21 @@ DataTable.prototype.refreshData = function (newData) {
     var css = _t.tools.css;
     var data = _t.dataFormat(newData);
     var compLength = data.length - _t.data.length;
-    console.log(data.length+"---"+_t.data.length);
     var colLength = _t.columns.length;
     var tbody = _t.table.querySelector('tbody');
-    var rows = tbody.querySelectorAll('tr'), row = null, cells = null, cell = null, cellData = null,l=0,le=0;
-    if(compLength>0){
-        for(var i=0;i<compLength;i++){
+    var rows = tbody.querySelectorAll('tr'), row = null, cells = null, cell = null, cellData = null, l = 0, le = 0;
+    if (compLength > 0) {
+        for (var i = 0; i < compLength; i++) {
             row = document.createElement('tr');
-            for(var j=0;j<colLength;j++){
+            for (var j = 0; j < colLength; j++) {
                 cell = document.createElement('td');
                 row.appendChild(cell);
             }
             tbody.appendChild(row);
         }
     }
-    if(compLength<0){
-        for(i = 0;i<Math.abs(compLength);i++){
+    if (compLength < 0) {
+        for (i = 0; i < Math.abs(compLength); i++) {
             tbody.removeChild(rows[_t.data.length - i - 1]);
         }
     }
