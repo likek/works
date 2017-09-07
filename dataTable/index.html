@@ -31,7 +31,7 @@
             doctor: "lisi"
         },
         {
-            equipment: "MR02",
+            equipment: "MR_未定义",
             doctor: "wangwu"
         },
         {
@@ -72,9 +72,14 @@
     };
     var dataTable = new DataTable(data, columns);
     dataTable.thead = ["设备编号", "占用医生", "操作"];
-    dataTable.filterBy = {
-        equipment: ['CT01'],
-        doctor:["wangwu"]
+//    dataTable.filterBy = {
+//        equipment: /未定义/,
+//        doctor:/^yaya$|^zhangsan$/
+//    };
+    dataTable.filterBy = function (i) {
+        var a = /未定义/.test(i.equipment) == false;
+        var b = ["yaya","zhangsan"].indexOf(i.doctor) == -1;
+        return a && b;
     };
     dataTable.sortBy = "equipment";
 

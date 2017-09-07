@@ -40,28 +40,47 @@ DataTable.prototype.tools = new function () {
         }
     };
     this.JSONSort = function (json, sortBy) {
-        var newJson = json.where(function (i) {
-            return i != null;
-        });
         function comp(sortBy) {
             return new Function("a", "b", "return a." + sortBy + ".toString().localeCompare(b." + sortBy + ".toString());");
         }
-        return newJson.sort(comp(sortBy));
+        return json.sort(comp(sortBy));
     };
     this.filter = function (filterList, data) {
         var _t = this;
         var newData = [].concat(data);
-        for (var item in filterList) {
-            if (filterList.hasOwnProperty(item)) {
-                !function (item) {
-                    newData = newData.where(function (i) {
-                        return filterList[item].indexOf(i[item]) == -1
-                    });
-                }(item);
+        if(Object.prototype.toString.call(filterList).slice(8,-1) == "Function"){
+            newData = newData.where(function (i) {
+                 return filterList(i);
+            })
+        }else {
+            for (var item in filterList) {
+                if (filterList.hasOwnProperty(item)) {
+                    !function (item) {
+                        newData = newData.where(function (i) {
+                            return !filterList[item].test(i[item]);
+                        });
+                    }(item);
+                }
             }
         }
         return newData;
     }
+};
+DataTable.prototype.dataFormat = function (data) {
+    var _t = this;
+    var filter = _t.tools.filter;
+    var JSONSort = _t.tools.JSONSort;
+    var newData = [].concat(data);
+    newData = newData.where(function (i) {
+        return i != null && Object.keys(i).length;
+    });
+    if (_t.filterBy) {
+        newData = filter(_t.filterBy, newData);
+    }
+    if (_t.sortBy) {
+        newData = JSONSort(newData, _t.sortBy);
+    }
+    return newData;
 };
 DataTable.prototype.draw = function (container) {
     container.innerHTML = "";
@@ -82,23 +101,21 @@ DataTable.prototype.draw = function (container) {
             _t.oncelldraw(cell, _t.thead[i]);
         }
         thead.appendChild(row);
-        // _t.onrowdraw(row, _t.thead);
+        _t.onrowdraw(row, _t.thead);
     }
     //体
     var tbody = document.createElement('tbody');
     var cellData = [];
     for (i = 0, l = _t.data.length; i < l; i++) {
-        if (_t.data[i] == null) {
-            continue;
-        }
         row = document.createElement('tr');
+        row.index = i;
         for (var j = 0, le = _t.columns.length; j < le; j++) {
             cell = document.createElement('td');
             cellData = _t.data[i][_t.columns[j].name] || _t.columns[j].default;
             cell.innerHTML = cellData;
             row.appendChild(cell);
-            _t.oncelldraw(cell, cellData);
             _t.columns[j].otherCss && css(cell, _t.columns[j].otherCss);
+            _t.oncelldraw(cell, cellData);
         }
         tbody.appendChild(row);
         _t.onrowdraw(row, _t.data[i]);
@@ -107,7 +124,7 @@ DataTable.prototype.draw = function (container) {
     var tfoot = null;
     if (_t.tfoot.length != 0) {
         tfoot = document.createElement('tfoot');
-        row = document.createElement('tfoot');
+        row = document.createElement('tr');
         for (i = 0, l = _t.tfoot.length; i < l; i++) {
             cell = document.createElement('td');
             cell.innerHTML = _t.tfoot[i];
@@ -124,24 +141,9 @@ DataTable.prototype.draw = function (container) {
     table.style.textAlign = "center";
     table.cellPadding = 0;
     table.setAttribute('class', 'dataTable');
-    _t.ontabledraw(table, _t.data);
     container.appendChild(table);
+    _t.ontabledraw(table, _t.data);
 };
-
-DataTable.prototype.dataFormat = function (data) {
-    var _t = this;
-    var filter = _t.tools.filter;
-    var JSONSort = _t.tools.JSONSort;
-    var newData = [].concat(data);
-    if (_t.filterBy) {
-        newData = filter(_t.filterBy, newData);
-    }
-    if (_t.sortBy) {
-        newData = JSONSort(newData, _t.sortBy);
-    }
-    return newData;
-};
-
 
 DataTable.prototype.refreshData = function (newData) {
     var _t = this;
@@ -171,6 +173,7 @@ DataTable.prototype.refreshData = function (newData) {
     rows = tbody.querySelectorAll('tr');
     for (i = 0, l = _t.data.length; i < l; i++) {
         row = rows[i];
+        row.index = i;
         cells = row.querySelectorAll('td');
         for (j = 0, le = _t.columns.length; j < le; j++) {
             cell = cells[j];
@@ -181,4 +184,8 @@ DataTable.prototype.refreshData = function (newData) {
         }
         _t.onrowdraw(row, _t.data[i]);
     }
+    _t.ontabledraw(_t.table, _t.data);
+};
+DataTable.prototype.removeRow = function (index) {
+
 };
