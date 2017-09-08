@@ -72,30 +72,46 @@
         occupiedByCurrUser: "#ccc"
     };
     var dataTable = new DataTable();
-    dataTable.columns = columns;
-//    dataTable.thead = ["设备编号", "占用医生", "操作"];
-//    dataTable.tfoot = ["设备编号", "占用医生", "操作"];
-//    dataTable.filterBy = {
-//        equipment: /未定义/,
-//        doctor:/^yaya$|^zhangsan$/
-//    };
     dataTable.container = tableContainer;
-    dataTable.filterBy = function (i) {
-        var a = /未定义/.test(i.equipment) == false;
-        var b = ["yaya","zhangsan"].indexOf(i.doctor) == -1;
-        return a && b;
+    dataTable.columns = columns;
+    dataTable.thead = ["设备编号", "占用医生", "操作"];
+    dataTable.tfoot = ["设备编号", "占用医生", "操作"];
+    //简单形式的过滤
+    dataTable.filterBy = {
+        equipment: /未定义/,
+        doctor:/^yaya$|^zhangsan$/
     };
-
+    //使用委托的形式国旅
+//    dataTable.filterBy = function (i) {
+//        var a = /未定义/.test(i.equipment) == false;
+//        var b = ["yaya","zhangsan"].indexOf(i.doctor) == -1;
+//        return a && b;
+//    };
+    //简单形式的排序
     dataTable.sortBy = "equipment";
+    dataTable.onrowdraw = function (row,data) {
+        console.log(row.rowType + "--" +row.index + "--" + JSON.stringify(data));
+    };
+    dataTable.oncelldraw = function (cell,data) {
+        console.log(cell.cellType + "--" +cell.index + "--" + data);
+    };
+    dataTable.ontabledraw = function (table, data) {
+        console.log(table);
+        console.log(data);
+    };
+    //委托形式的排序
+//    dataTable.sortBy = function (a,b) {
+//        return a.equipment.localeCompare(b.equipment);
+//    };
 
     dataTable.draw(data);
     //    //定时刷新数据
-    !function drawData() {
-        //获取最新数据
-        dataTable.draw(data);
-        setTimeout(function () {
-            drawData();
-        }, 3000);
-    }();
+//    !function drawData() {
+//        //获取最新数据
+//        dataTable.draw(data);
+//        setTimeout(function () {
+//            drawData();
+//        }, 3000);
+//    }();
 </script>
 </html>

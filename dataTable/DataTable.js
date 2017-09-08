@@ -107,34 +107,27 @@ DataTable.prototype.drawBody = function (newData) {
     if (compLength > 0) {
         for (var i = 0; i < compLength; i++) {
             row = document.createElement('tr');
-            console.log("createRow");
             for (var j = 0; j < colLength; j++) {
                 cell = document.createElement('td');
                 row.appendChild(cell);
-                console.log("addCell")
             }
-            console.log("addCellEnd");
             tbody.appendChild(row);
         }
-        console.log('createRowEnd');
     }
     if (compLength < 0) {
-        alert('badd');
         for (i = 0; i < Math.abs(compLength); i++) {
             tbody.removeChild(rows[_t.data.length - i - 1]);
-            console.log("removeRow");
         }
-        console.log("removeRowEnd");
     }
     rows = tbody.querySelectorAll('tr');
     for (i = 0, l = data.length; i < l; i++) {
         row = rows[i];
-        row.rowIndex = i;
+        row.index = i;
         row.rowType = "tbody";
         cells = row.querySelectorAll('td');
         for (j = 0, le = _t.columns.length; j < le; j++) {
             cell = cells[j];
-            cell.cellIndex = j;
+            cell.index = j;
             cell.cellType = "tbody";
             cellData = data[i][_t.columns[j].name] || _t.columns[j].default;
             cell.innerHTML = cellData;
@@ -155,23 +148,20 @@ DataTable.prototype.drawHead = function () {
     var thead = _t.table.querySelector('thead')||document.createElement('thead');
     if (_t.thead.length != 0) {
         if(thead.childElementCount === 0){
-            console.log('create head');
             row = document.createElement('tr');
             for(i=0,l=_t.thead.length;i<l;i++){
                 cell = document.createElement('th');
                 row.appendChild(cell);
-                console.log('add Headcell')
             }
-            console.log('addHeadcellEND')
             thead.appendChild(row);
         }
         row = thead.querySelector('tr');
-        row.rowIndex = 0;
+        row.index = 0;
         row.rowType = "thead";
         cells = row.querySelectorAll('th');
         for (var i = 0, l = _t.thead.length; i < l; i++) {
             cells[i].innerHTML = _t.thead[i];
-            cells[i].cellIndex = i;
+            cells[i].index = i;
             cells[i].cellType = "thead";
             _t.oncelldraw(cells[i], _t.thead[i]);
         }
@@ -194,12 +184,12 @@ DataTable.prototype.drawFoot = function () {
             tfoot.appendChild(row);
         }
         row = tfoot.querySelector('tr');
-        row.rowIndex  = 0;
+        row.index  = 0;
         row.rowType = "tfoot";
         cells = row.querySelectorAll('td');
         for (var i = 0, l = _t.tfoot.length; i < l; i++) {
             cells[i].innerHTML = _t.tfoot[i];
-            cells[i].cellIndex = i;
+            cells[i].index = i;
             cells[i].cellType = 'tfoot';
             _t.oncelldraw(cells[i], _t.tfoot[i]);
         }
@@ -220,7 +210,7 @@ DataTable.prototype.draw = function (newData) {
     _t.data = data;
     thead && table.querySelector('thead') || table.appendChild(thead);
     tbody && table.querySelector('tbody') || table.appendChild(tbody);
-    tfoot && table.querySelector('tbody')|| table.appendChild(tfoot);
+    tfoot && table.querySelector('tfoot')|| table.appendChild(tfoot);
     table && container.hasChildNodes(table)||container.appendChild(table);
     table.style.width = "100%";
     table.style.textAlign = "center";
