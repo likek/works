@@ -16,13 +16,14 @@ Array.prototype.where = function (match) {
 /*
  *DataTable类开始
  * */
-function DataTable(data, columns) {
-    this.data = [].concat(data);
-    this.columns = columns;
+function DataTable() {
+    this.data = [];
+    this.columns = [];
     this.filterBy = null;
     this.sortBy = null;
     this.thead = [];
     this.tfoot = [];
+    this.container = null;
     this.table = document.createElement('table');
     this.ontabledraw = function (table, tableData) {
     };
@@ -43,6 +44,12 @@ DataTable.prototype.tools = new function () {
         function comp(sortBy) {
             return new Function("a", "b", "return a." + sortBy + ".toString().localeCompare(b." + sortBy + ".toString());");
         }
+        if(Object.prototype.toString.call(sortBy).slice(8,-1) == "Function"){
+            return json.sort(sortBy);
+        }
+        if(sortBy.slice(0,4)==="${-}"){
+            return json.sort(comp(sortBy)).reverse();
+        }
         return json.sort(comp(sortBy));
     };
     this.filter = function (filterList, data) {
@@ -50,7 +57,7 @@ DataTable.prototype.tools = new function () {
         var newData = [].concat(data);
         if(Object.prototype.toString.call(filterList).slice(8,-1) == "Function"){
             newData = newData.where(function (i) {
-                 return filterList(i);
+                return filterList(i);
             })
         }else {
             for (var item in filterList) {
@@ -82,110 +89,142 @@ DataTable.prototype.dataFormat = function (data) {
     }
     return newData;
 };
-DataTable.prototype.draw = function (container) {
-    container.innerHTML = "";
+
+DataTable.prototype.drawBody = function (newData) {
     var _t = this;
     var css = _t.tools.css;
-    var table = _t.table;
-    var row = null, cell = null;
-    _t.data = _t.dataFormat(_t.data);
-    //头
-    var thead = null;
-    if (_t.thead.length != 0) {
-        thead = document.createElement('thead');
-        row = document.createElement('tr');
-        for (var i = 0, l = _t.thead.length; i < l; i++) {
-            cell = document.createElement('th');
-            cell.innerHTML = _t.thead[i];
-            row.appendChild(cell);
-            _t.oncelldraw(cell, _t.thead[i]);
-        }
-        thead.appendChild(row);
-        _t.onrowdraw(row, _t.thead);
+    var colLength = _t.columns.length;
+    var data = newData && _t.dataFormat(newData);
+    _t.data =  _t.data || [].concat(data);
+    if(_t.data.length ==0 && newData.length == 0){
+        return this;
     }
-    //体
-    var tbody = document.createElement('tbody');
-    var cellData = [];
-    for (i = 0, l = _t.data.length; i < l; i++) {
-        row = document.createElement('tr');
-        row.index = i;
-        for (var j = 0, le = _t.columns.length; j < le; j++) {
-            cell = document.createElement('td');
-            cellData = _t.data[i][_t.columns[j].name] || _t.columns[j].default;
+    _t.data = _t.dataFormat(_t.data);
+    var compLength = data.length - _t.data.length;
+    var tbody = _t.table.querySelector('tbody')||document.createElement('tbody');
+    var rows = tbody.querySelectorAll('tr');
+    var row = null, cells = null, cell = null,l,le;
+    if (compLength > 0) {
+        for (var i = 0; i < compLength; i++) {
+            row = document.createElement('tr');
+            console.log("createRow");
+            for (var j = 0; j < colLength; j++) {
+                cell = document.createElement('td');
+                row.appendChild(cell);
+                console.log("addCell")
+            }
+            console.log("addCellEnd");
+            tbody.appendChild(row);
+        }
+        console.log('createRowEnd');
+    }
+    if (compLength < 0) {
+        alert('badd');
+        for (i = 0; i < Math.abs(compLength); i++) {
+            tbody.removeChild(rows[_t.data.length - i - 1]);
+            console.log("removeRow");
+        }
+        console.log("removeRowEnd");
+    }
+    rows = tbody.querySelectorAll('tr');
+    for (i = 0, l = data.length; i < l; i++) {
+        row = rows[i];
+        row.rowIndex = i;
+        row.rowType = "tbody";
+        cells = row.querySelectorAll('td');
+        for (j = 0, le = _t.columns.length; j < le; j++) {
+            cell = cells[j];
+            cell.cellIndex = j;
+            cell.cellType = "tbody";
+            cellData = data[i][_t.columns[j].name] || _t.columns[j].default;
             cell.innerHTML = cellData;
-            row.appendChild(cell);
             _t.columns[j].otherCss && css(cell, _t.columns[j].otherCss);
             _t.oncelldraw(cell, cellData);
         }
-        tbody.appendChild(row);
-        _t.onrowdraw(row, _t.data[i]);
+        _t.onrowdraw(row, data[i]);
     }
-    //尾
-    var tfoot = null;
-    if (_t.tfoot.length != 0) {
-        tfoot = document.createElement('tfoot');
-        row = document.createElement('tr');
-        for (i = 0, l = _t.tfoot.length; i < l; i++) {
-            cell = document.createElement('td');
-            cell.innerHTML = _t.tfoot[i];
-            row.appendChild(cell);
-            _t.oncelldraw(cell, _t.tfoot[i]);
+    return {
+        tbody:tbody,
+        data:data
+    };
+};
+
+DataTable.prototype.drawHead = function () {
+    var _t = this;
+    var row = null, cells = null, cell = null;
+    var thead = _t.table.querySelector('thead')||document.createElement('thead');
+    if (_t.thead.length != 0) {
+        if(thead.childElementCount === 0){
+            console.log('create head');
+            row = document.createElement('tr');
+            for(i=0,l=_t.thead.length;i<l;i++){
+                cell = document.createElement('th');
+                row.appendChild(cell);
+                console.log('add Headcell')
+            }
+            console.log('addHeadcellEND')
+            thead.appendChild(row);
         }
-        tfoot.appendChild(row);
+        row = thead.querySelector('tr');
+        row.rowIndex = 0;
+        row.rowType = "thead";
+        cells = row.querySelectorAll('th');
+        for (var i = 0, l = _t.thead.length; i < l; i++) {
+            cells[i].innerHTML = _t.thead[i];
+            cells[i].cellIndex = i;
+            cells[i].cellType = "thead";
+            _t.oncelldraw(cells[i], _t.thead[i]);
+        }
+        _t.onrowdraw(row, _t.thead);
+    }
+    return thead;
+};
+
+DataTable.prototype.drawFoot = function () {
+    var _t = this;
+    var row = null, cells = null, cell = null;
+    var tfoot = _t.table.querySelector('tfoot')||document.createElement('tfoot');
+    if (_t.tfoot.length != 0) {
+        if(tfoot.childElementCount === 0){
+            row = document.createElement('tr');
+            for(i=0,l=_t.tfoot.length;i<l;i++){
+                cell = document.createElement('td');
+                row.appendChild(cell);
+            }
+            tfoot.appendChild(row);
+        }
+        row = tfoot.querySelector('tr');
+        row.rowIndex  = 0;
+        row.rowType = "tfoot";
+        cells = row.querySelectorAll('td');
+        for (var i = 0, l = _t.tfoot.length; i < l; i++) {
+            cells[i].innerHTML = _t.tfoot[i];
+            cells[i].cellIndex = i;
+            cells[i].cellType = 'tfoot';
+            _t.oncelldraw(cells[i], _t.tfoot[i]);
+        }
         _t.onrowdraw(row, _t.tfoot);
     }
-    thead && table.appendChild(thead);
-    table.appendChild(tbody);
-    tfoot && table.appendChild(tfoot);
+    return tfoot;
+};
+
+DataTable.prototype.draw = function (newData) {
+    var _t = this;
+    var table = _t.table;
+    var container = _t.container;
+    var tbodyO = _t.drawBody(newData);
+    var thead =  _t.drawHead();
+    var tbody = tbodyO.tbody;
+    var tfoot = _t.drawFoot();
+    var data = tbodyO.data;
+    _t.data = data;
+    thead && table.querySelector('thead') || table.appendChild(thead);
+    tbody && table.querySelector('tbody') || table.appendChild(tbody);
+    tfoot && table.querySelector('tbody')|| table.appendChild(tfoot);
+    table && container.hasChildNodes(table)||container.appendChild(table);
     table.style.width = "100%";
     table.style.textAlign = "center";
     table.cellPadding = 0;
     table.setAttribute('class', 'dataTable');
-    container.appendChild(table);
-    _t.ontabledraw(table, _t.data);
-};
-
-DataTable.prototype.refreshData = function (newData) {
-    var _t = this;
-    var css = _t.tools.css;
-    var data = _t.dataFormat(newData);
-    var compLength = data.length - _t.data.length;
-    var colLength = _t.columns.length;
-    var tbody = _t.table.querySelector('tbody');
-    var rows = tbody.querySelectorAll('tr'), row = null, cells = null, cell = null, cellData = null, l = 0, le = 0;
-    if (compLength > 0) {
-        for (var i = 0; i < compLength; i++) {
-            row = document.createElement('tr');
-            for (var j = 0; j < colLength; j++) {
-                cell = document.createElement('td');
-                row.appendChild(cell);
-            }
-            tbody.appendChild(row);
-        }
-    }
-    if (compLength < 0) {
-        for (i = 0; i < Math.abs(compLength); i++) {
-            tbody.removeChild(rows[_t.data.length - i - 1]);
-        }
-    }
-    _t.data = [].concat(data);
-    _t.data = _t.dataFormat(_t.data);
-    rows = tbody.querySelectorAll('tr');
-    for (i = 0, l = _t.data.length; i < l; i++) {
-        row = rows[i];
-        row.index = i;
-        cells = row.querySelectorAll('td');
-        for (j = 0, le = _t.columns.length; j < le; j++) {
-            cell = cells[j];
-            cellData = _t.data[i][_t.columns[j].name] || _t.columns[j].default;
-            cell.innerHTML = cellData;
-            _t.columns[j].otherCss && css(cell, _t.columns[j].otherCss);
-            _t.oncelldraw(cell, cellData);
-        }
-        _t.onrowdraw(row, _t.data[i]);
-    }
-    _t.ontabledraw(_t.table, _t.data);
-};
-DataTable.prototype.removeRow = function (index) {
-
+    _t.ontabledraw(table, data);
 };

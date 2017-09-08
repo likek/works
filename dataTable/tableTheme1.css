@@ -6,13 +6,13 @@
 .dataTable tbody{
     border-bottom: 1px solid #000;
 }*/
-.dataTable tbody,.dataTable thead{
+.dataTable tbody,.dataTable thead,.dataTable tfoot{
     display: block;
     height: 100%;
 }
 .dataTable tbody{
-    height: 300px;
-    overflow-y: auto;
+    overflow-y: scroll;
+    height: 200px;
 }
 .dataTable tbody tr:nth-child(1) td{
     border-top: none;
@@ -23,6 +23,6 @@
 .dataTable tbody td{
     width: 200px;
 }
-.dataTable thead th{
+.dataTable thead th,.dataTable tfoot td{
     width: 193px;
 }

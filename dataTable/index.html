@@ -16,6 +16,7 @@
 </body>
 
 <script>
+
     var currentUser = "lisi";
     var data = [
         {
@@ -70,54 +71,28 @@
         free: "#58C4A0",
         occupiedByCurrUser: "#ccc"
     };
-    var dataTable = new DataTable(data, columns);
-    dataTable.thead = ["设备编号", "占用医生", "操作"];
+    var dataTable = new DataTable();
+    dataTable.columns = columns;
+//    dataTable.thead = ["设备编号", "占用医生", "操作"];
+//    dataTable.tfoot = ["设备编号", "占用医生", "操作"];
 //    dataTable.filterBy = {
 //        equipment: /未定义/,
 //        doctor:/^yaya$|^zhangsan$/
 //    };
+    dataTable.container = tableContainer;
     dataTable.filterBy = function (i) {
         var a = /未定义/.test(i.equipment) == false;
         var b = ["yaya","zhangsan"].indexOf(i.doctor) == -1;
         return a && b;
     };
+
     dataTable.sortBy = "equipment";
 
-    dataTable.onrowdraw = function (row, data) {
-        var btn = row.lastElementChild;
-        if (data.doctor == currentUser) {
-            btn.innerHTML = '<input type="button" value="解除占用">';
-            row.style.background = statusColor.occupiedByCurrUser;
-            btn.onclick = function (e) {
-                //发数据
-
-                //获取数据并更新
-//                dataTable.data = newData;
-//                dataTable.refreshData();
-            }
-        }
-        if (data.doctor == "") {
-            btn.innerHTML = '<input type="button" value="切换到该设备">';
-            row.style.background = statusColor.free;
-            btn.onclick = function (e) {
-                //发数据
-
-                //获取数据并更新
-//                dataTable.data = newData;
-//                dataTable.refreshData();
-            }
-        }
-        btn.style.cursor = "pointer";
-    };
-    dataTable.draw(tableContainer);
-    data.push({
-        equipment: "MR02",
-        doctor: "wangwu"
-    });
-    //定时刷新数据
+    dataTable.draw(data);
+    //    //定时刷新数据
     !function drawData() {
         //获取最新数据
-        dataTable.refreshData(data);
+        dataTable.draw(data);
         setTimeout(function () {
             drawData();
         }, 3000);
