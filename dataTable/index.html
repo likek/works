@@ -89,6 +89,10 @@
 //    };
     //简单形式的排序
     dataTable.sortBy = "equipment";
+    //委托形式的排序
+    //    dataTable.sortBy = function (a,b) {
+    //        return a.equipment.localeCompare(b.equipment);
+    //    };
     dataTable.onrowdraw = function (row,data) {
         console.log(row.rowType + "--" +row.index + "--" + JSON.stringify(data));
     };
@@ -99,10 +103,6 @@
         console.log(table);
         console.log(data);
     };
-    //委托形式的排序
-//    dataTable.sortBy = function (a,b) {
-//        return a.equipment.localeCompare(b.equipment);
-//    };
 
     dataTable.draw(data);
     //    //定时刷新数据
