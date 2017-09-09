@@ -48,7 +48,7 @@ DataTable.prototype.tools = new function () {
             return json.sort(sortBy);
         }
         if(sortBy.slice(0,4)==="${-}"){
-            return json.sort(comp(sortBy)).reverse();
+            return json.sort(comp(sortBy.slice(4))).reverse();
         }
         return json.sort(comp(sortBy));
     };
@@ -97,7 +97,10 @@ DataTable.prototype.drawBody = function (newData) {
     var data = newData && _t.dataFormat(newData);
     _t.data =  _t.data || [].concat(data);
     if(_t.data.length ==0 && newData.length == 0){
-        return this;
+        return {
+            tbody:null,
+            data:null
+        };
     }
     _t.data = _t.dataFormat(_t.data);
     var compLength = data.length - _t.data.length;
@@ -208,13 +211,15 @@ DataTable.prototype.draw = function (newData) {
     var tfoot = _t.drawFoot();
     var data = tbodyO.data;
     _t.data = data;
-    thead && table.querySelector('thead') || table.appendChild(thead);
-    tbody && table.querySelector('tbody') || table.appendChild(tbody);
-    tfoot && table.querySelector('tfoot')|| table.appendChild(tfoot);
-    table && container.hasChildNodes(table)||container.appendChild(table);
-    table.style.width = "100%";
-    table.style.textAlign = "center";
-    table.cellPadding = 0;
-    table.setAttribute('class', 'dataTable');
+    table.querySelector('thead') || table.appendChild(thead);
+    table.querySelector('tbody') || table.appendChild(tbody);
+    table.querySelector('tfoot')|| table.appendChild(tfoot);
+    if(!container.querySelector('table.dataTable')){
+        container.appendChild(table);
+        table.style.width = "100%";
+        table.style.textAlign = "center";
+        table.cellPadding = 0;
+        table.setAttribute('class', 'dataTable');
+    }
     _t.ontabledraw(table, data);
 };
