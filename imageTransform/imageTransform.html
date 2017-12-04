@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,7 @@
 
 </body>
 
-<script src="imageBox.js"></script>
+<script src="ImageTransform.js"></script>
 
 <script>
     /*
@@ -21,19 +21,12 @@
      * (4.如果启用右键，引入imageBox.css)
      * */
 
-    var imagB = new ImageBox({
+    var imagB = new ImageTransform({
         targetElement: document.querySelector('#testEle'),//必选参数，可以是任意类型元素
         menusList: true,//可选参数，是否启用右键菜单，启用需先引入./menusList.css
-        localExpend: false,//局部放大功能（还没做）
         initWidth: 400,//可选参数，元素的初始宽
-        scaleDetail: 0.2//可选参数，单次缩放比
+        scaleDetail: 0.06//可选参数，单次缩放比
     });
     imagB.start();//启动
-
-    //模拟延迟加载
-    //开始时testEle的src如果为空不做处理的话则会有部分功能丢失
-    //        setTimeout(function () {
-    //            getEle("#testEle").src='0.jpg';
-    //        },2000)
 </script>
 </html>

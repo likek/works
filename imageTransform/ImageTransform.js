@@ -1,88 +1,82 @@
-/**
- * Created by likeke on 2017/7/13.
- */
-
 /***************************tools开始***********************************/
-//给构造函数添加方法
-Function.prototype.method = function (name, func) {
-    this.prototype[name] = func;
+Function.prototype.addProp = function (prop, value) {
+    this.prototype[prop] = value;
     return this;
 };
-//绑定事件
 Object.prototype.addEvent = function () {
+    this.removeEventListener.apply(this,arguments);
     this.addEventListener.apply(this, arguments);
     return this;
 };
 /***************************tools结束***********************************/
-
-/******************************构建ImageBox类开始*************************************/
-if (ImageBox) console.warn('命名冲突:构造函数ImageBox');
-
-var ImageBox = function (config) {
+if (ImageTransform) console.error('命名冲突:构造函数ImageTransform');
+var ImageTransform = function (config) {
     this.config = config;
+    this.scaleDetail = null;
+    this.status = null;
 };
-ImageBox.method('start', function () {
+ImageTransform.addProp('start', function (callback) {
     var self = this;
     if (!(self.config.targetElement instanceof HTMLElement)) {
-        console.warn('参数类型错误:targetElement必须为DOM对象');
+        console.error('参数类型错误:targetElement必须为DOM对象');
         return;
     }
-    self.config.targetElement.addEvent('load', function () {
+    self.config.targetElement.addEvent('load', init);
+    function init() {
+        if(self.config.targetElement.getAttribute('__initComplated'))return;//防止src变化时重复绑定事件bug
         self.dataInit();
         self.eventInit();
         if (self.config.menusList) self.menusListInit();
         if (self.config.localExpend) self.localExpendInit();
-    });
-}).method('dataInit', function () {
-    //初始化基本数据:
-    var conf = this.config; //配置项集合
-    this.scaleDetail = conf.scaleDetail || 0.3; //缩放比
-    //被操作目标元素的初始宽度
-    if (conf.initWidth) {
-        conf.targetElement.style.width = conf.initWidth + "px";
+        if(typeof callback == "function") callback(self);
+        self.config.targetElement.setAttribute('__initComplated',true);
     }
-    conf.targetElement.style.position = 'absolute';
-    //被操作目标元素的状态
+}).addProp('dataInit', function () {
+    var conf = this.config; //配置项集合
+    this.scaleDetail = conf.scaleDetail || 0.05; //缩放比
+    //初始样式
+    if (conf.css){
+        for(var css in conf.css){
+            if(conf.css.hasOwnProperty(css)){
+                conf.targetElement.style[css] = conf.css[css];
+            }
+        }
+    }
     this.status = {
-        initWidth: conf.targetElement.offsetWidth,
-        initHeight: conf.targetElement.offsetHeight,
+        initWidth: conf.initWidth||conf.targetElement.clientWidth,
+        initHeight: conf.initHeight||conf.targetElement.clientHeight,
+        initLeft:conf.initLeft||conf.targetElement.offsetLeft,
+        initTop:conf.initTop||conf.targetElement.offsetTop,
         deg: 0,
         scale: 1
     };
-}).method('eventInit', function () {
+    conf.targetElement.style.position = 'absolute';
+}).addProp('eventInit', function () {
     //事件绑定:
     var self = this;
     var conf = self.config;
-    var eventFunc = self.eventFunc(); //事件方法集合
+    var transform = self.transform(); //变换方法集合
     var targetElement = conf.targetElement; //被操作的目标元素
+    targetElement.addEvent('mousedown', mousedown);
+    document.body.addEvent('mousewheel', mousewheel);
 
-    targetElement.addEvent('mousedown', function (e) {
-        //鼠标按下后的移动事件
-        var ev = e || window.event;
-        eventFunc.move(e,'mouseup');
-    });
-
-    //滚轮滚动事件
-    document.addEvent('mousewheel', function (e) {
+    function mousedown(e) {var ev = e || window.event;transform.move(e, 'mouseup');}
+    function mousewheel(e) {
         var e = e || window.event;
         e.preventDefault(); //防止有滚动条时缩小时跳动
         if (e.wheelDelta > 0) {
-            eventFunc.scale('toBig');
+            transform.scale('1');
         } else {
-            eventFunc.scale('toSmall');
+            transform.scale('-1');
         }
-    });
-}).method('menusListInit', function () {
-    //右键菜单初始化(如果启用的话)
+    }
+}).addProp('menusListInit', function () {
     var conf = this.config;
     var targetElement = conf.targetElement;
-    var eventFunc = this.eventFunc();
+    var transform = this.transform();
     var menusList = document.createElement('ul');
     menusList.setAttribute('id', 'menusList');
-    var lis = [{id: 'scaleB', text: '放大'}, {id: 'scaleS', text: '缩小'}, {id: 'rotateN', text: '逆时针旋转'}, {
-        id: 'rotateS',
-        text: '顺时针旋转'
-    }, {id: 'reset', text: '重置'}];
+    var lis = [ { id: 'rotateN', text: '逆时针旋转' }, {id: 'rotateS', text: '顺时针旋转'},{ id: 'scaleB', text: '放大' }, { id: 'scaleS', text: '缩小' }, { id: 'reset', text: '重置'}];
     for (var i = 0, l = lis.length; i < l; i++) {
         var li = document.createElement('li');
         li.setAttribute('id', lis[i].id);
@@ -95,37 +89,22 @@ ImageBox.method('start', function () {
     var rotateN = menusList.querySelector('#rotateN'); //逆时针
     var rotateS = menusList.querySelector('#rotateS'); //顺时针
     var reset = menusList.querySelector('#reset'); //还原大小
+    menusList.addEvent('mouseout', mouseout).addEvent('mouseover', mouseover);
+    scaleB.addEvent('click', big);
+    scaleS.addEvent('click', small);
+    rotateN.addEvent('click', rotate1);
+    rotateS.addEvent('click', rotate2);
+    reset.addEvent('click', resetTransform);
+    targetElement.addEvent('contextmenu', contextmenu);
 
-    scaleB.addEvent('click', function (e) {
-        //放大：
-        eventFunc.scale('toBig');
-    });
-    scaleS.addEvent('click', function (e) {
-        //缩小：
-        eventFunc.scale('toSmall');
-    });
-
-    menusList.addEvent('mouseout', function (e) {
-        //menusList鼠标移出
-        menusList.style.display = 'none';
-    }).addEvent('mouseover', function (e) {
-        //menusList鼠标移入
-        menusList.style.display = 'block';
-    });
-    //逆时针旋转事件
-    rotateN.addEvent('click', function (e) {
-        eventFunc.rotate(-90);
-    });
-    //顺时针旋转事件
-    rotateS.addEvent('click', function (e) {
-        eventFunc.rotate(90);
-    });
-    //还原大小事件
-    reset.addEvent('click', function (e) {
-        eventFunc.resetTransf();
-    });
-    targetElement.addEvent('contextmenu', function (e) {
-        //目标元素右键点击事件
+    function mouseout(e) {menusList.style.display = 'none';}
+    function mouseover(e) {menusList.style.display = 'block';}
+    function big(e) {transform.scale('1');}
+    function small(e) {transform.scale('-1');}
+    function rotate1(e) {transform.rotate(-90);}
+    function rotate2(e) {transform.rotate(90);}
+    function resetTransform(e) {transform.reset();}
+    function contextmenu(e) {
         var e = e || window.event;
         e.preventDefault();
         var Px = e.pageX;
@@ -133,11 +112,8 @@ ImageBox.method('start', function () {
         menusList.style.display = 'block';
         menusList.style.top = Py - 20 + 'px';
         menusList.style.left = Px - 20 + 'px';
-    });
-}).method('localExpendInit', function () {
-    //局部放大功能
-
-}).method('eventFunc', function () {
+    }
+}).addProp('transform', function () {
     //目标元素的事件函数集合:
     var self = this;
     var conf = this.config;
@@ -159,27 +135,29 @@ ImageBox.method('start', function () {
     return {
         scale: function (style) {
             //缩放：
-            var height = targetElement.offsetHeight;
+            // var height = targetElement.offsetHeight;
             var x = self.scaleDetail; //缩放比例
             switch (style) {
-                case 'toBig':
-                    if (self.status.scale >= 10) {
+                case '1':
+                    if (self.status.scale >= (conf.maxScale||5)) {
                         //已到最大级别
                         return;
                     }
-                    self.status.scale = height * (self.status.scale + x) / self.status.initHeight;
+                    // self.status.scale = height * (self.status.scale + x) / self.status.initHeight;
+                    self.status.scale += x;
                     transform(targetElement, {});
                     break;
-                case 'toSmall':
-                    if (self.status.scale - 0.1 <= 0) {
+                case '-1':
+                    if (self.status.scale <= (conf.minScale||0.1)) {
                         //已到最小级别
                         return;
                     }
-                    self.status.scale = height * (self.status.scale - x) / self.status.initHeight;
+                    // self.status.scale = height * (self.status.scale - x) / self.status.initHeight;
+                    self.status.scale -= x;
                     transform(targetElement, {});
                     break;
                 default:
-                    console.warn("参数类型错误:ImageBox.eventFun.scale要求参数为字符串toBig或toSmall");
+                    console.error("参数类型错误:ImageTransform.transform().scale要求参数为字符串1或-1");
                     break;
             }
         },
@@ -187,20 +165,20 @@ ImageBox.method('start', function () {
             self.status.deg += deg;
             transform(targetElement, {});
         },
-        resetTransf: function () {
+        reset: function () {
             //还原:
-            transform(targetElement, {deg: "0", scale: 1, left: "0", top: "0"});
+            transform(targetElement, { deg: "0", scale: 1, left: self.status.initLeft, top: self.status.initTop});
             self.status.scale = 1;
             self.status.deg = 0;
         },
-        move: function (e,endMoveEvent) {
+        move: function (e, endMoveEvent) {
             //移动:
             var ev = e || window.event;
             var startX = ev.pageX;
             var startY = ev.pageY;
             var imgStartX = targetElement.offsetLeft;
             var imgStartY = targetElement.offsetTop;
-
+            targetElement.style.cursor = 'move';
             function mouseMoveFunc(ev) {
                 var ev = ev || window.event;
                 ev.preventDefault();
@@ -211,9 +189,9 @@ ImageBox.method('start', function () {
                 targetElement.style.left = imgStartX + CX + "px";
                 targetElement.style.top = imgStartY + CY + "px";
             }
-
             targetElement.addEvent('mousemove', mouseMoveFunc);
             targetElement.addEvent(endMoveEvent, function (e) {
+                targetElement.style.cursor = 'default';
                 targetElement.removeEventListener('mousemove', mouseMoveFunc);
             })
         }

@@ -1,9 +1,5 @@
-body,html{
-    padding: 0;
-    margin:0;
-}
 #menusList{
-    background: #ddd;
+    background: #000;
     color: #fff;
     position: absolute;
     display: none;
@@ -19,5 +15,6 @@ body,html{
     padding: .2rem .3rem;
 }
 #menusList li:hover{
-    background: #ccc;
+    background: #fff;
+    color: #000;
 }
