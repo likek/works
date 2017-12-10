@@ -17,19 +17,20 @@ var ImageTransform = function (config) {
 };
 ImageTransform.addProp('start', function (callback) {
     var self = this;
-    if (!(self.config.targetElement instanceof HTMLElement)) {
+    var targetElement = self.config.targetElement;
+    if (!(targetElement instanceof HTMLElement)) {
         console.error('参数类型错误:targetElement必须为DOM对象');
         return;
     }
-    self.config.targetElement.addEvent('load', init);
+    targetElement.addEvent('load', init);
+    if(targetElement.complete)init();//解决有缓存时load事件不执行的问题
     function init() {
-        if(self.config.targetElement.getAttribute('__initCompleted'))return;//防止src变化时重复绑定事件bug
+        if(targetElement.getAttribute('__initCompleted'))return;//防止src变化时和刷新页面时的多次初始化
         self.dataInit();
         self.eventInit();
         if (self.config.menusList) self.menusListInit();
-        //if (self.config.localExpend) self.localExpendInit();
         if(typeof callback == "function") callback(self);
-        self.config.targetElement.setAttribute('__initCompleted',true);
+        targetElement.setAttribute('__initCompleted',true);
     }
 }).addProp('dataInit', function () {
     var conf = this.config; //配置项集合
@@ -161,8 +162,9 @@ ImageTransform.addProp('start', function (callback) {
                     break;
             }
         },
-        rotate: function (deg) {
-            self.status.deg += deg;
+        rotate: function (deg,relativePos) {
+            relativePos = typeof relativePos === "number"? relativePos : self.status.deg;
+            self.status.deg = Number(relativePos) + Number(deg);
             transform(targetElement, {});
         },
         reset: function () {
