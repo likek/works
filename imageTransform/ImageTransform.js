@@ -27,7 +27,7 @@ ImageTransform.addProp('start', function (callback) {
         self.dataInit();
         self.eventInit();
         if (self.config.menusList) self.menusListInit();
-        if (self.config.localExpend) self.localExpendInit();
+        //if (self.config.localExpend) self.localExpendInit();
         if(typeof callback == "function") callback(self);
         self.config.targetElement.setAttribute('__initCompleted',true);
     }
