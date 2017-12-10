@@ -23,13 +23,13 @@ ImageTransform.addProp('start', function (callback) {
     }
     self.config.targetElement.addEvent('load', init);
     function init() {
-        if(self.config.targetElement.getAttribute('__initComplated'))return;//防止src变化时重复绑定事件bug
+        if(self.config.targetElement.getAttribute('__initCompleted'))return;//防止src变化时重复绑定事件bug
         self.dataInit();
         self.eventInit();
         if (self.config.menusList) self.menusListInit();
         if (self.config.localExpend) self.localExpendInit();
         if(typeof callback == "function") callback(self);
-        self.config.targetElement.setAttribute('__initComplated',true);
+        self.config.targetElement.setAttribute('__initCompleted',true);
     }
 }).addProp('dataInit', function () {
     var conf = this.config; //配置项集合
