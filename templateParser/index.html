@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <script src="TemplateEngine.js"></script>
+</head>
+<body engine-root>
+
+<div id="header">
+    Hey,
+</div>
+
+<div id="content">
+    {{include "a.html"}} <!--自动引入-->
+</div>
+
+<!--模板-->
+<script id="contentTemplate" type="text/html">
+    <h1>标题:{{title}}</h1>
+    <div>内容:{{contentText}}</div>
+</script>
+
+</body>
+</html>
+<script>
+    var header = document.getElementById('header');
+    var content = document.getElementById('content');
+
+    TemplateEngine.include('./common-header.html',header,{title: "header"});/*手动引入*/
+    TemplateEngine.parser('contentTemplate',content,{
+        title:'这是标题',
+        contentText:"这是内容"
+    });
+
+    TemplateEngine.autoInclude();
+</script>
