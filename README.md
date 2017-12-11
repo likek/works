@@ -5,4 +5,4 @@
 * flexByScreenWidth : 给一个最佳显示效果下的分辨率，检测当前分辨率，对当前页面以及层层嵌套的iframe递归操作进行缩放，以此实现在不做任何自适应处理的情况下保证布局不会乱(牺牲点：字体会在一定程度上拉伸变形)
 * marquee : 无缝滚动
 * dataTable :　数据表格插件
-* templateParser:　模板引擎
+* templateParser:　模板引擎(废弃)
